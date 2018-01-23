@@ -6,42 +6,43 @@ import scatters from './scatters.json'
 import 'whatwg-fetch'
 var HOST = 'http://0.0.0.0:5000'
 Vue.use(Vuex)
-{
-  var colorList = []
-  let _length = jsonStyle.length
-  for (let i = 0; i < _length; i++) {
-    let color = {
-      hex: jsonStyle[i].stylers.color
-      // hsl: {
-      //   h: 150,
-      //   s: 0.5,
-      //   l: 0.2,
-      //   a: 1
-      // },
-      // hsv: {
-      //   h: 150,
-      //   s: 0.66,
-      //   v: 0.30,
-      //   a: 1
-      // },
-      // rgba: {
-      //   r: 25,
-      //   g: 77,
-      //   b: 51,
-      //   a: 1
-      // },
-      // a: 1
-    }
-    colorList.push(color)
-  }
-}
+// {
+//   var colorList = []
+//   let _length = jsonStyle.length
+//   for (let i = 0; i < _length; i++) {
+//     let color = {
+//       hex: jsonStyle[i].stylers.color
+//       // hsl: {
+//       //   h: 150,
+//       //   s: 0.5,
+//       //   l: 0.2,
+//       //   a: 1
+//       // },
+//       // hsv: {
+//       //   h: 150,
+//       //   s: 0.66,
+//       //   v: 0.30,
+//       //   a: 1
+//       // },
+//       // rgba: {
+//       //   r: 25,
+//       //   g: 77,
+//       //   b: 51,
+//       //   a: 1
+//       // },
+//       // a: 1
+//     }
+//     colorList.push(color)
+//   }
+// }
 // 虽然可以从后端获取配色方案，但仍建议在前端保留一分配色方案模版用作创建新的配色方案时使用。
 var store = new Vuex.Store({
   state: {
     optionList: [],
     currentOption: 0,
-    colorList: colorList,
-    currentColorPos: 0,
+    // colorList: colorList,
+    // colorList 用来存储多种不同的颜色方案
+    colorList: [],
     bmapOption: {
       bmap: {
         center: [116.3, 39.9],
@@ -88,12 +89,6 @@ var store = new Vuex.Store({
     styleJson (state) {
       return state.bmapOption.bmap.mapStyle.styleJson
     },
-    currentColor (state) {
-      return state.colorList[state.currentColorPos]
-    },
-    currentTitle (state) {
-      return state.bmapOption.bmap.mapStyle.styleJson[state.currentColorPos].featureType + ' | ' + state.bmapOption.bmap.mapStyle.styleJson[state.currentColorPos].elementType
-    },
     options (state) {
       return state.optionList
     }
@@ -101,11 +96,13 @@ var store = new Vuex.Store({
   mutations: {
     changeColor (state, paras) {
       // paras = [index, color]
+      // changeColor是颜色选取器在选取颜色时调用，将选取的颜色替代吊bmap配置中的颜色，实现对地图的实时修改
       console.log(paras)
       state.bmapOption.bmap.mapStyle.styleJson[paras[0]].stylers.color = paras[1]
     },
     changeVisible (state, paras) {
       // paras = [index, status]
+      // changeVisible是在选择某一元素（如铁路）是否可见时调用，将修改bmap中对应元素属性的visibility
       if (paras[1]) {
         state.bmapOption.bmap.mapStyle.styleJson[paras[0]].stylers.visibility = 'on'
       } else {
@@ -113,6 +110,8 @@ var store = new Vuex.Store({
       }
     },
     changeOption (state, index) {
+      // changeOption用来从optionList中选取当前的option方案，并将其显示在地图上
+      // 这个过程还会需要建立一个colorList以方便colorPicker进行调用
       state.currentOption = index
       state.bmapOption.bmap.mapStyle.styleJson = state.optionList[index].option
       state.colorList = []
