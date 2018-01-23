@@ -34,11 +34,13 @@ export default {
   },
   data () {
     return {
-      btnStatus: false,
-      color: this.$store.state.colorList[this.$props.styleId].hex
+      btnStatus: false
     }
   },
   computed: {
+    color () {
+      return this.$store.state.colorList[this.$props.styleId].hex
+    },
     visible: {
       get () {
         return this.$store.getters.styleJson[this.$props.styleId].stylers.visibility === 'on'

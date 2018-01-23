@@ -3,6 +3,8 @@ import Vuex from 'vuex'
 // import initColor from './initColor.json'
 import jsonStyle from './jsonStyle2.json'
 import scatters from './scatters.json'
+import 'whatwg-fetch'
+var HOST = 'http://0.0.0.0:5000'
 Vue.use(Vuex)
 {
   var colorList = []
@@ -33,15 +35,18 @@ Vue.use(Vuex)
     colorList.push(color)
   }
 }
+// 虽然可以从后端获取配色方案，但仍建议在前端保留一分配色方案模版用作创建新的配色方案时使用。
 var store = new Vuex.Store({
   state: {
+    optionList: [],
+    currentOption: 0,
     colorList: colorList,
     currentColorPos: 0,
     bmapOption: {
       bmap: {
         center: [116.3, 39.9],
         // 中心位置坐标
-        zoom: 9,
+        zoom: 7,
         // 地图缩放比例
         roam: true,
         // 开启用户缩放
@@ -88,6 +93,9 @@ var store = new Vuex.Store({
     },
     currentTitle (state) {
       return state.bmapOption.bmap.mapStyle.styleJson[state.currentColorPos].featureType + ' | ' + state.bmapOption.bmap.mapStyle.styleJson[state.currentColorPos].elementType
+    },
+    options (state) {
+      return state.optionList
     }
   },
   mutations: {
@@ -103,6 +111,70 @@ var store = new Vuex.Store({
       } else {
         state.bmapOption.bmap.mapStyle.styleJson[paras[0]].stylers.visibility = 'off'
       }
+    },
+    changeOption (state, index) {
+      state.currentOption = index
+      state.bmapOption.bmap.mapStyle.styleJson = state.optionList[index].option
+      state.colorList = []
+      let _length = state.bmapOption.bmap.mapStyle.styleJson.length
+      for (let i = 0; i < _length; i++) {
+        let color = {hex: state.bmapOption.bmap.mapStyle.styleJson[i].stylers.color}
+        state.colorList.push(color)
+      }
+    },
+    createOption (state) {
+      state.optionList.push({
+        name: `demo${state.optionList.length}`,
+        date: (new Date()).toString(),
+        option: JSON.parse(JSON.stringify(jsonStyle))
+      })
+      // state.currentOption
+      // 可以加如自动跳转功能
+    }
+  },
+  actions: {
+    getOptions (context) {
+      // 从服务器获取所有已有的配色方案
+      fetch(HOST + '/api/options', {
+        method: 'GET'
+      }).then((response) => {
+        return response.json()
+      }).then((res) => {
+        // 更新配色方案列表，同时更新当前被选取的配色方案为获取到的列表中的第一个方案
+        console.log(res)
+        context.state.optionList = res
+        context.state.currentOption = 0
+        context.state.bmapOption.bmap.mapStyle.styleJson = res[0].option
+        // 性质：
+        // context.state.optionList与context.state.bmapOption.bmap.mapStyle.styleJson由于引用关系具有同步关系
+        // 同步colorList与bmapStyle
+        context.state.colorList = []
+        let _length = res[0].option.length
+        for (let i = 0; i < _length; i++) {
+          let color = {hex: res[0].option[i].stylers.color}
+          context.state.colorList.push(color)
+        }
+      })
+    },
+    updateOptions (context) {
+      // 创建一个配色方案，发送至后端进行保存，同时返回新的配色方案列表，并重新渲染前端
+      // 另一种实现方案即不获取完整的返回数据，保存在前端的缓存数据中（认为前后端在逻辑上是同步一致的，不需要确认过程，这种方案思想优美，但不够安全稳定）
+      fetch(HOST + '/api/update', {
+        method: 'POST',
+        body: JSON.stringify(context.state.optionList)
+      }).then((response) => {
+        return response.json()
+      }).then((response) => {
+        context.state.optionList = response
+        context.state.currentOption = 0
+        context.state.bmapOption.bmap.mapStyle.styleJson = response[0].option
+        context.state.colorList = []
+        let _length = response[0].option.length
+        for (let i = 0; i < _length; i++) {
+          let color = {hex: response[0].option[i].stylers.color}
+          context.state.colorList.push(color)
+        }
+      })
     }
   }
 })
