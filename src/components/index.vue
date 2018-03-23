@@ -18,19 +18,7 @@
         </div>
       </div>
     </div>
-    <div class="ui segment">
-      <div class="ui cards">
-        <div class="ui link card" v-for="(option, i) in options"
-        @click="changeOption(i)"
-        :key="option.name">
-          <div class="content">
-            <div class="header">{{option.name}}</div>
-            <div class="meta">{{option.date}}</div>
-            <div class="description"></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <cards/>
 </div>
 </template>
 
@@ -38,6 +26,8 @@
 import colorPicker from '@/components/Tools/colorpicker.vue'
 import configs from '@/components/Tools/configs.vue'
 import bmap from '@/components/bmap.vue'
+import cards from '@/components/Tools/cards.vue'
+import modal from './Tools/jsonmodal.vue'
 export default {
   name: 'index-board',
   data () {
@@ -46,15 +36,9 @@ export default {
   computed: {
     configs () {
       return this.$store.getters.styleJson
-    },
-    options () {
-      return this.$store.getters.options
     }
   },
   methods: {
-    changeOption (i) {
-      this.$store.commit('changeOption', i)
-    },
     createOption () {
       this.$store.commit('createOption')
     },
@@ -66,9 +50,11 @@ export default {
     this.$store.dispatch('getOptions')
   },
   components: {
+    modal,
     colorPicker,
     configs,
-    bmap
+    bmap,
+    cards
   }
 }
 </script>
